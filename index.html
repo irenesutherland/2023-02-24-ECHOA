@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/qgis2web.css"><link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet-control-geocoder.Geocoder.css">
+        <link rel="stylesheet" href="css/leaflet-measure.css">
+        <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        </style>
+        <title></title>
+    </head>
+    <body>
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/multi-style-layer.js"></script>
+        <script src="js/leaflet-svg-shape-markers.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet-control-geocoder.Geocoder.js"></script>
+        <script src="js/leaflet-measure.js"></script>
+        <script src="data/IndexedPrimaryDams_3.js"></script>
+        <script src="data/IndexedSecondaryDams_4.js"></script>
+        <script src="data/IndexedOBPoints_5.js"></script>
+        <script src="data/20230223MonthlyRainfall_6.js"></script>
+        <script src="data/WQjoined_7.js"></script>
+        <script>
+        var highlightLayer;
+        function highlightFeature(e) {
+            highlightLayer = e.target;
+
+            if (e.target.feature.geometry.type === 'LineString') {
+              highlightLayer.setStyle({
+                color: '#ffff00',
+              });
+            } else {
+              highlightLayer.setStyle({
+                fillColor: '#ffff00',
+                fillOpacity: 1
+              });
+            }
+            highlightLayer.openPopup();
+        }
+        var map = L.map('map', {
+            zoomControl:true, maxZoom:28, minZoom:1
+        })
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        var measureControl = new L.Control.Measure({
+            position: 'topleft',
+            primaryLengthUnit: 'meters',
+            secondaryLengthUnit: 'kilometers',
+            primaryAreaUnit: 'sqmeters',
+            secondaryAreaUnit: 'hectares'
+        });
+        measureControl.addTo(map);
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0]
+        .innerHTML = '';
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0]
+        .className += ' fas fa-ruler';
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+            if (bounds_group.getLayers().length) {
+                map.fitBounds(bounds_group.getBounds());
+            }
+            map.setMaxBounds(map.getBounds());
+        }
+        map.createPane('pane_OSMStandard_0');
+        map.getPane('pane_OSMStandard_0').style.zIndex = 400;
+        var layer_OSMStandard_0 = L.tileLayer('http://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            pane: 'pane_OSMStandard_0',
+            opacity: 1.0,
+            attribution: '<a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors, CC-BY-SA</a>',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 19
+        });
+        layer_OSMStandard_0;
+        map.addLayer(layer_OSMStandard_0);
+        map.createPane('pane_GoogleMaps_1');
+        map.getPane('pane_GoogleMaps_1').style.zIndex = 401;
+        var layer_GoogleMaps_1 = L.tileLayer('http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}', {
+            pane: 'pane_GoogleMaps_1',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 18
+        });
+        layer_GoogleMaps_1;
+        map.addLayer(layer_GoogleMaps_1);
+        map.createPane('pane_GoogleSatelliteHybrid_2');
+        map.getPane('pane_GoogleSatelliteHybrid_2').style.zIndex = 402;
+        var layer_GoogleSatelliteHybrid_2 = L.tileLayer(' https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+            pane: 'pane_GoogleSatelliteHybrid_2',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 18
+        });
+        layer_GoogleSatelliteHybrid_2;
+        map.addLayer(layer_GoogleSatelliteHybrid_2);
+        function pop_IndexedPrimaryDams_3(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (i in e.target._eventParents) {
+                        e.target._eventParents[i].resetStyle(e.target);
+                    }
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(feature.properties['id'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Name</th>\
+                        <td>' + (feature.properties['Name'] !== null ? autolinker.link(feature.properties['Name'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Pumped</th>\
+                        <td>' + (feature.properties['Pumped'] !== null ? autolinker.link(feature.properties['Pumped'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2"><strong>Volume</strong><br />' + (feature.properties['Volume'] !== null ? autolinker.link(feature.properties['Volume'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Surface</th>\
+                        <td>' + (feature.properties['Surface'] !== null ? autolinker.link(feature.properties['Surface'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Evap_Rate</th>\
+                        <td>' + (feature.properties['Evap_Rate'] !== null ? autolinker.link(feature.properties['Evap_Rate'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            layer.bindPopup(popupContent, {maxHeight: 400});
+        }
+
+        function style_IndexedPrimaryDams_3_0() {
+            return {
+                pane: 'pane_IndexedPrimaryDams_3',
+                opacity: 1,
+                color: 'rgba(9,241,249,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 4.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,127,0,0.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_IndexedPrimaryDams_3');
+        map.getPane('pane_IndexedPrimaryDams_3').style.zIndex = 403;
+        map.getPane('pane_IndexedPrimaryDams_3').style['mix-blend-mode'] = 'normal';
+        var layer_IndexedPrimaryDams_3 = new L.geoJson(json_IndexedPrimaryDams_3, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_IndexedPrimaryDams_3',
+            layerName: 'layer_IndexedPrimaryDams_3',
+            pane: 'pane_IndexedPrimaryDams_3',
+            onEachFeature: pop_IndexedPrimaryDams_3,
+            style: style_IndexedPrimaryDams_3_0,
+        });
+        bounds_group.addLayer(layer_IndexedPrimaryDams_3);
+        map.addLayer(layer_IndexedPrimaryDams_3);
+        function pop_IndexedSecondaryDams_4(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (i in e.target._eventParents) {
+                        e.target._eventParents[i].resetStyle(e.target);
+                    }
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(feature.properties['id'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Name</th>\
+                        <td>' + (feature.properties['Name'] !== null ? autolinker.link(feature.properties['Name'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Pumped</th>\
+                        <td>' + (feature.properties['Pumped'] !== null ? autolinker.link(feature.properties['Pumped'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Volume</th>\
+                        <td>' + (feature.properties['Volume'] !== null ? autolinker.link(feature.properties['Volume'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Suface</th>\
+                        <td>' + (feature.properties['Suface'] !== null ? autolinker.link(feature.properties['Suface'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Evap_Rate</th>\
+                        <td>' + (feature.properties['Evap_Rate'] !== null ? autolinker.link(feature.properties['Evap_Rate'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            layer.bindPopup(popupContent, {maxHeight: 400});
+        }
+
+        function style_IndexedSecondaryDams_4_0() {
+            return {
+                pane: 'pane_IndexedSecondaryDams_4',
+                opacity: 1,
+                color: 'rgba(255,127,0,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 4.0, 
+                fillOpacity: 0,
+                interactive: true,
+            }
+        }
+        map.createPane('pane_IndexedSecondaryDams_4');
+        map.getPane('pane_IndexedSecondaryDams_4').style.zIndex = 404;
+        map.getPane('pane_IndexedSecondaryDams_4').style['mix-blend-mode'] = 'normal';
+        var layer_IndexedSecondaryDams_4 = new L.geoJson(json_IndexedSecondaryDams_4, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_IndexedSecondaryDams_4',
+            layerName: 'layer_IndexedSecondaryDams_4',
+            pane: 'pane_IndexedSecondaryDams_4',
+            onEachFeature: pop_IndexedSecondaryDams_4,
+            style: style_IndexedSecondaryDams_4_0,
+        });
+        bounds_group.addLayer(layer_IndexedSecondaryDams_4);
+        map.addLayer(layer_IndexedSecondaryDams_4);
+        function pop_IndexedOBPoints_5(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (i in e.target._eventParents) {
+                        e.target._eventParents[i].resetStyle(e.target);
+                    }
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2"><strong>id</strong><br />' + (feature.properties['id'] !== null ? autolinker.link(feature.properties['id'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Name'] !== null ? autolinker.link(feature.properties['Name'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            layer.bindPopup(popupContent, {maxHeight: 400});
+        }
+
+        function style_IndexedOBPoints_5_0() {
+            return {
+                pane: 'pane_IndexedOBPoints_5',
+                radius: 8.0,
+                opacity: 1,
+                color: 'rgba(221,0,237,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 8.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(221,0,237,0.0)',
+                interactive: true,
+            }
+        }
+        function style_IndexedOBPoints_5_1() {
+            return {
+                pane: 'pane_IndexedOBPoints_5',
+                radius: 6.0,
+                opacity: 1,
+                color: 'rgba(237,237,0,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 3.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(237,237,0,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_IndexedOBPoints_5');
+        map.getPane('pane_IndexedOBPoints_5').style.zIndex = 405;
+        map.getPane('pane_IndexedOBPoints_5').style['mix-blend-mode'] = 'normal';
+        var layer_IndexedOBPoints_5 = new L.geoJson.multiStyle(json_IndexedOBPoints_5, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_IndexedOBPoints_5',
+            layerName: 'layer_IndexedOBPoints_5',
+            pane: 'pane_IndexedOBPoints_5',
+            onEachFeature: pop_IndexedOBPoints_5,
+            pointToLayers: [function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.shapeMarker(latlng, style_IndexedOBPoints_5_0(feature));
+            },function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.shapeMarker(latlng, style_IndexedOBPoints_5_1(feature));
+            },
+        ]});
+        bounds_group.addLayer(layer_IndexedOBPoints_5);
+        map.addLayer(layer_IndexedOBPoints_5);
+        function pop_20230223MonthlyRainfall_6(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (i in e.target._eventParents) {
+                        e.target._eventParents[i].resetStyle(e.target);
+                    }
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">Name</th>\
+                        <td>' + (feature.properties['Name'] !== null ? autolinker.link(feature.properties['Name'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">DATE</th>\
+                        <td>' + (feature.properties['DATE'] !== null ? autolinker.link(feature.properties['DATE'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Rain(mm)</th>\
+                        <td>' + (feature.properties['Rain(mm)'] !== null ? autolinker.link(feature.properties['Rain(mm)'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            layer.bindPopup(popupContent, {maxHeight: 400});
+        }
+
+        function style_20230223MonthlyRainfall_6_0() {
+            return {
+                pane: 'pane_20230223MonthlyRainfall_6',
+                radius: 8.0,
+                opacity: 1,
+                color: 'rgba(0,36,237,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 8.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(221,0,237,0.0)',
+                interactive: true,
+            }
+        }
+        function style_20230223MonthlyRainfall_6_1() {
+            return {
+                pane: 'pane_20230223MonthlyRainfall_6',
+                radius: 6.0,
+                opacity: 1,
+                color: 'rgba(32,62,198,0.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 3.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(9,241,249,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_20230223MonthlyRainfall_6');
+        map.getPane('pane_20230223MonthlyRainfall_6').style.zIndex = 406;
+        map.getPane('pane_20230223MonthlyRainfall_6').style['mix-blend-mode'] = 'normal';
+        var layer_20230223MonthlyRainfall_6 = new L.geoJson.multiStyle(json_20230223MonthlyRainfall_6, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_20230223MonthlyRainfall_6',
+            layerName: 'layer_20230223MonthlyRainfall_6',
+            pane: 'pane_20230223MonthlyRainfall_6',
+            onEachFeature: pop_20230223MonthlyRainfall_6,
+            pointToLayers: [function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.shapeMarker(latlng, style_20230223MonthlyRainfall_6_0(feature));
+            },function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.shapeMarker(latlng, style_20230223MonthlyRainfall_6_1(feature));
+            },
+        ]});
+        bounds_group.addLayer(layer_20230223MonthlyRainfall_6);
+        map.addLayer(layer_20230223MonthlyRainfall_6);
+        function pop_WQjoined_7(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (i in e.target._eventParents) {
+                        e.target._eventParents[i].resetStyle(e.target);
+                    }
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(feature.properties['id'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Name</th>\
+                        <td>' + (feature.properties['Name'] !== null ? autolinker.link(feature.properties['Name'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Date</th>\
+                        <td>' + (feature.properties['Date'] !== null ? autolinker.link(feature.properties['Date'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Total Coli</th>\
+                        <td>' + (feature.properties['Total Coli'] !== null ? autolinker.link(feature.properties['Total Coli'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Faecal Col</th>\
+                        <td>' + (feature.properties['Faecal Col'] !== null ? autolinker.link(feature.properties['Faecal Col'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Ammonia Ni</th>\
+                        <td>' + (feature.properties['Ammonia Ni'] !== null ? autolinker.link(feature.properties['Ammonia Ni'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Chemical O</th>\
+                        <td>' + (feature.properties['Chemical O'] !== null ? autolinker.link(feature.properties['Chemical O'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Nitrate Ni</th>\
+                        <td>' + (feature.properties['Nitrate Ni'] !== null ? autolinker.link(feature.properties['Nitrate Ni'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Orthophosp</th>\
+                        <td>' + (feature.properties['Orthophosp'] !== null ? autolinker.link(feature.properties['Orthophosp'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">pH</th>\
+                        <td>' + (feature.properties['pH'] !== null ? autolinker.link(feature.properties['pH'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Total Susp</th>\
+                        <td>' + (feature.properties['Total Susp'] !== null ? autolinker.link(feature.properties['Total Susp'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            layer.bindPopup(popupContent, {maxHeight: 400});
+        }
+
+        function style_WQjoined_7_0() {
+            return {
+                pane: 'pane_WQjoined_7',
+                shape: 'square',
+                radius: 8.0,
+                opacity: 1,
+                color: 'rgba(51,160,44,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 8.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(9,241,32,0.0)',
+                interactive: true,
+            }
+        }
+        function style_WQjoined_7_1() {
+            return {
+                pane: 'pane_WQjoined_7',
+                radius: 6.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,0.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 3.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(9,241,32,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_WQjoined_7');
+        map.getPane('pane_WQjoined_7').style.zIndex = 407;
+        map.getPane('pane_WQjoined_7').style['mix-blend-mode'] = 'normal';
+        var layer_WQjoined_7 = new L.geoJson.multiStyle(json_WQjoined_7, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_WQjoined_7',
+            layerName: 'layer_WQjoined_7',
+            pane: 'pane_WQjoined_7',
+            onEachFeature: pop_WQjoined_7,
+            pointToLayers: [function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_WQjoined_7_0(feature));
+            },function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_WQjoined_7_1(feature));
+            },
+        ]});
+        bounds_group.addLayer(layer_WQjoined_7);
+        map.addLayer(layer_WQjoined_7);
+        var osmGeocoder = new L.Control.Geocoder({
+            collapsed: true,
+            position: 'topleft',
+            text: 'Search',
+            title: 'Testing'
+        }).addTo(map);
+        document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
+        .className += ' fa fa-search';
+        document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
+        .title += 'Search for a place';
+        setBounds();
+        var i = 0;
+        layer_IndexedPrimaryDams_3.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['Name'] !== null?String('<div style="color: #09f1f9; font-size: 7pt; font-weight: bold; font-family: \'Arial\', sans-serif;">' + layer.feature.properties['Name']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_IndexedPrimaryDams_3'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_IndexedSecondaryDams_4.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['Name'] !== null?String('<div style="color: #ff7f00; font-size: 3pt; font-weight: bold; font-family: \'Arial\', sans-serif;">' + layer.feature.properties['Name']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_IndexedSecondaryDams_4'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_IndexedOBPoints_5.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['Name'] !== null?String('<div style="color: #323232; font-size: 6pt; font-family: \'Arial\', sans-serif;">' + layer.feature.properties['Name']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_IndexedOBPoints_5'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_20230223MonthlyRainfall_6.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['Name'] !== null?String('<div style="color: #323232; font-size: 6pt; font-family: \'Arial\', sans-serif;">' + layer.feature.properties['Name']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_20230223MonthlyRainfall_6'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_WQjoined_7.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['Name'] !== null?String('<div style="color: #323232; font-size: 6pt; font-family: \'Arial\', sans-serif;">' + layer.feature.properties['Name']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_WQjoined_7'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        resetLabels([layer_IndexedPrimaryDams_3,layer_IndexedSecondaryDams_4,layer_IndexedOBPoints_5,layer_20230223MonthlyRainfall_6,layer_WQjoined_7]);
+        map.on("zoomend", function(){
+            resetLabels([layer_IndexedPrimaryDams_3,layer_IndexedSecondaryDams_4,layer_IndexedOBPoints_5,layer_20230223MonthlyRainfall_6,layer_WQjoined_7]);
+        });
+        map.on("layeradd", function(){
+            resetLabels([layer_IndexedPrimaryDams_3,layer_IndexedSecondaryDams_4,layer_IndexedOBPoints_5,layer_20230223MonthlyRainfall_6,layer_WQjoined_7]);
+        });
+        map.on("layerremove", function(){
+            resetLabels([layer_IndexedPrimaryDams_3,layer_IndexedSecondaryDams_4,layer_IndexedOBPoints_5,layer_20230223MonthlyRainfall_6,layer_WQjoined_7]);
+        });
+        </script>
+    </body>
+</html>
